@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CriminoQuest RPG – Carabineros de Chile</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Exo+2:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0c14;
+    --bg-panel: #111827;
+    --bg-card: #1a2235;
+    --border: #2a3a5c;
+    --accent1: #00d4ff;
+    --accent2: #ffd700;
+    --accent3: #ff4d6d;
+    --accent4: #7c3aed;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text-dim: #8899aa;
+    --glow1: 0 0 20px rgba(0,212,255,0.4);
+    --glow2: 0 0 20px rgba(255,215,0,0.4);
+    --glow3: 0 0 20px rgba(255,77,109,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(0,60,120,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(100,0,180,0.1) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* ─── HUD BAR ─── */
+  #hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(10,12,20,0.95);
+    border-bottom: 2px solid var(--border);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  #hud .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--accent1);
+    text-shadow: var(--glow1);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  .hud-center {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .stat-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 90px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent2);
+    text-shadow: var(--glow2);
+  }
+
+  .xp-bar-wrap {
+    flex: 1;
+    max-width: 200px;
+  }
+
+  .xp-bar-bg {
+    background: #1a2235;
+    border-radius: 4px;
+    height: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent4), var(--accent1));
+    border-radius: 4px;
+    transition: width 0.6s ease;
+    box-shadow: 0 0 8px var(--accent1);
+  }
+
+  .rank-badge {
+    background: linear-gradient(135deg, var(--accent4), #1e40af);
+    border: 2px solid var(--accent1);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    text-shadow: var(--glow1);
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .rank-badge span {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+  }
+
+  /* ─── MAIN CONTAINER ─── */
+  #app {
+    padding-top: 80px;
+    padding-bottom: 40px;
+  }
+
+  /* ─── SCREEN BASE ─── */
+  .screen {
+    display: none;
+    animation: fadeIn 0.4s ease;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── TITLE SCREEN ─── */
+  #screen-title {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .title-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(124,58,237,0.15));
+    border: 2px solid var(--accent1);
+    border-radius: 12px;
+    padding: 6px 20px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent1);
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  .main-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #ffffff 0%, var(--accent1) 40%, var(--accent2) 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    color: var(--accent2);
+    letter-spacing: 4px;
+    margin-bottom: 40px;
+    text-shadow: var(--glow2);
+  }
+
+  .intro-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 36px;
+    margin: 0 auto 40px;
+    max-width: 640px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .intro-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent4), var(--accent2));
+  }
+
+  .intro-card p {
+    color: var(--text-dim);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  .intro-card strong { color: var(--accent1); }
+
+  /* ─── UNIT MAP ─── */
+  .unit-map-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+
+  .units-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .unit-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .unit-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 14px;
+  }
+
+  .unit-card:hover { transform: translateY(-4px); }
+  .unit-card:hover::before { opacity: 1; }
+
+  .unit-card.u1::before { background: radial-gradient(ellipse at center, rgba(0,212,255,0.1), transparent); border: 2px solid rgba(0,212,255,0.4); }
+  .unit-card.u2::before { background: radial-gradient(ellipse at center, rgba(255,215,0,0.1), transparent); }
+  .unit-card.u3::before { background: radial-gradient(ellipse at center, rgba(255,77,109,0.1), transparent); }
+  .unit-card.u4::before { background: radial-gradient(ellipse at center, rgba(124,58,237,0.1), transparent); }
+
+  .unit-card.u1:hover { border-color: var(--accent1); box-shadow: var(--glow1); }
+  .unit-card.u2:hover { border-color: var(--accent2); box-shadow: var(--glow2); }
+  .unit-card.u3:hover { border-color: var(--accent3); box-shadow: var(--glow3); }
+  .unit-card.u4:hover { border-color: var(--accent4); box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+
+  .unit-card.locked { opacity: 0.45; cursor: not-allowed; }
+  .unit-card.locked:hover { transform: none; box-shadow: none; border-color: var(--border); }
+
+  .unit-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+
+  .unit-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .unit-name {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .unit-stars { font-size: 13px; margin-bottom: 10px; }
+
+  .unit-status {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .status-available { background: rgba(34,197,94,0.2); color: var(--green); border: 1px solid var(--green); }
+  .status-locked { background: rgba(100,100,100,0.2); color: #666; border: 1px solid #444; }
+  .status-done { background: rgba(255,215,0,0.2); color: var(--accent2); border: 1px solid var(--accent2); }
+
+  /* ─── LESSON SCREEN ─── */
+  .lesson-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .lesson-unit-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+
+  .lesson-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 700;
+    flex: 1;
+  }
+
+  .lesson-progress-bar {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    height: 6px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+
+  .lesson-progress-fill {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent4));
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px var(--accent1);
+  }
+
+  /* ─── GAME MODES ─── */
+  .game-frame {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-frame::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .frame-quiz::before { background: linear-gradient(90deg, var(--accent1), var(--accent4)); }
+  .frame-match::before { background: linear-gradient(90deg, var(--accent2), var(--accent3)); }
+  .frame-fill::before { background: linear-gradient(90deg, var(--green), var(--accent1)); }
+  .frame-sort::before { background: linear-gradient(90deg, var(--accent3), var(--accent4)); }
+
+  .game-type-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .tag-quiz { background: rgba(0,212,255,0.15); color: var(--accent1); border: 1px solid var(--accent1); }
+  .tag-match { background: rgba(255,215,0,0.15); color: var(--accent2); border: 1px solid var(--accent2); }
+  .tag-fill { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid var(--green); }
+  .tag-sort { background: rgba(255,77,109,0.15); color: var(--accent3); border: 1px solid var(--accent3); }
+
+  .question-text {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  /* ─── QUIZ OPTIONS ─── */
+  .quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 600px) { .quiz-options { grid-template-columns: 1fr; } }
+
+  .quiz-option {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .quiz-option:hover:not(.disabled) {
+    border-color: var(--accent1);
+    background: rgba(0,212,255,0.08);
+    transform: translateX(4px);
+  }
+
+  .quiz-option.correct {
+    border-color: var(--green) !important;
+    background: rgba(34,197,94,0.15) !important;
+    animation: pulse-green 0.5s ease;
+  }
+
+  .quiz-option.wrong {
+    border-color: var(--red) !important;
+    background: rgba(239,68,68,0.15) !important;
+    animation: shake 0.4s ease;
+  }
+
+  .quiz-option.disabled { cursor: not-allowed; }
+
+  @keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+    100% { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .option-letter {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: background 0.25s;
+  }
+
+  .quiz-option:hover:not(.disabled) .option-letter { background: var(--accent1); color: #000; }
+  .quiz-option.correct .option-letter { background: var(--green); color: #000; }
+  .quiz-option.wrong .option-letter { background: var(--red); color: white; }
+
+  /* ─── MATCH GAME ─── */
+  .match-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .match-col-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .match-item {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .match-item:hover:not(.matched):not(.selected-wrong) { border-color: var(--accent2); color: var(--accent2); }
+  .match-item.selected { border-color: var(--accent2); background: rgba(255,215,0,0.12); color: var(--accent2); }
+  .match-item.matched { border-color: var(--green); background: rgba(34,197,94,0.12); color: var(--green); cursor: default; }
+  .match-item.selected-wrong { border-color: var(--red); background: rgba(239,68,68,0.12); color: var(--red); animation: shake 0.4s ease; }
+
+  /* ─── FILL IN THE BLANK ─── */
+  .fill-blank-wrap {
+    font-size: 18px;
+    line-height: 2;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  .blank-input {
+    background: rgba(0,212,255,0.08);
+    border: 2px solid var(--accent1);
+    border-radius: 8px;
+    padding: 4px 12px;
+    color: var(--accent1);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    min-width: 150px;
+    outline: none;
+    transition: all 0.25s;
+  }
+
+  .blank-input:focus { box-shadow: var(--glow1); background: rgba(0,212,255,0.12); }
+  .blank-input.correct-input { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.12); }
+  .blank-input.wrong-input { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.12); }
+
+  .word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .word-chip {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+
+  .word-chip:hover { border-color: var(--accent2); color: var(--accent2); transform: scale(1.05); }
+  .word-chip.used { opacity: 0.3; cursor: not-allowed; text-decoration: line-through; }
+
+  /* ─── SORT GAME ─── */
+  .sort-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .sort-item {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: grab;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .sort-item:hover { border-color: var(--accent3); background: rgba(255,77,109,0.06); }
+  .sort-item.dragging { opacity: 0.5; transform: scale(0.97); }
+  .sort-item.over { border-color: var(--accent1); background: rgba(0,212,255,0.08); }
+
+  .sort-handle { font-size: 16px; opacity: 0.5; flex-shrink: 0; }
+  .sort-num { width: 28px; height: 28px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 11px; flex-shrink: 0; }
+
+  /* ─── FEEDBACK BANNER ─── */
+  .feedback-banner {
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    animation: slideDown 0.3s ease;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .feedback-banner.correct-fb { background: rgba(34,197,94,0.15); border: 1px solid var(--green); color: var(--green); }
+  .feedback-banner.wrong-fb { background: rgba(239,68,68,0.15); border: 1px solid var(--red); color: #fca5a5; }
+  .feedback-banner.info-fb { background: rgba(0,212,255,0.12); border: 1px solid var(--accent1); color: var(--accent1); }
+
+  .fb-icon { font-size: 22px; flex-shrink: 0; }
+  .fb-text { flex: 1; }
+  .fb-title { font-weight: 700; margin-bottom: 4px; }
+  .fb-detail { opacity: 0.85; font-size: 13px; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent1), var(--accent4));
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,212,255,0.5); }
+
+  .btn-secondary {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover { border-color: var(--accent1); color: var(--accent1); }
+
+  .btn-gold {
+    background: linear-gradient(135deg, #b8860b, var(--accent2));
+    color: #000;
+    box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+  }
+
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(255,215,0,0.5); }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  /* ─── RESULT SCREEN ─── */
+  .result-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent4), var(--accent2));
+  }
+
+  .result-trophy { font-size: 80px; margin-bottom: 16px; display: block; animation: bounce 1s ease infinite alternate; }
+
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+  }
+
+  .result-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .result-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    color: var(--accent2);
+    text-shadow: var(--glow2);
+    margin: 16px 0;
+  }
+
+  .result-xp {
+    font-size: 18px;
+    color: var(--accent1);
+    margin-bottom: 8px;
+  }
+
+  .result-stars {
+    font-size: 36px;
+    margin: 12px 0;
+    letter-spacing: 8px;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin: 24px 0;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-num { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; color: var(--accent1); }
+  .stat-lbl { font-size: 11px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+
+  /* ─── ANIMATIONS ─── */
+  .float-points {
+    position: fixed;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 9999;
+    animation: floatUp 1.5s ease forwards;
+  }
+
+  .float-points.plus { color: var(--green); text-shadow: 0 0 10px var(--green); }
+  .float-points.minus { color: var(--red); text-shadow: 0 0 10px var(--red); }
+
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+  }
+
+  .level-up-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    animation: fadeSplash 2.5s ease forwards;
+  }
+
+  @keyframes fadeSplash {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; pointer-events: none; }
+  }
+
+  .level-up-content {
+    text-align: center;
+    animation: zoomIn 0.4s ease;
+  }
+
+  @keyframes zoomIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .level-up-icon { font-size: 80px; display: block; margin-bottom: 12px; }
+  .level-up-text {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--accent2);
+    text-shadow: 0 0 30px var(--accent2);
+  }
+
+  /* ─── HINTS ─── */
+  .hint-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--accent2);
+    background: none;
+    border: 1px solid var(--accent2);
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+  }
+
+  .hint-btn:hover { background: rgba(255,215,0,0.1); }
+
+  .hint-box {
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--accent2);
+    line-height: 1.5;
+    animation: slideDown 0.3s ease;
+  }
+
+  /* ─── STEP INDICATOR ─── */
+  .steps-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .step-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+
+  .step-dot.active { background: var(--accent1); box-shadow: var(--glow1); transform: scale(1.3); }
+  .step-dot.done { background: var(--green); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    .match-container { grid-template-columns: 1fr; }
+    #hud .logo { font-size: 10px; }
+    .stat-value { font-size: 14px; }
+  }
+
+  /* ─── UNIT COLOR ACCENTS ─── */
+  .u1-color { color: var(--accent1); }
+  .u2-color { color: var(--accent2); }
+  .u3-color { color: var(--accent3); }
+  .u4-color { color: var(--accent4); }
+
+  .lesson-unit-badge.u1 { background: rgba(0,212,255,0.15); color: var(--accent1); border: 1px solid var(--accent1); }
+  .lesson-unit-badge.u2 { background: rgba(255,215,0,0.15); color: var(--accent2); border: 1px solid var(--accent2); }
+  .lesson-unit-badge.u3 { background: rgba(255,77,109,0.15); color: var(--accent3); border: 1px solid var(--accent3); }
+  .lesson-unit-badge.u4 { background: rgba(124,58,237,0.15); color: var(--accent4); border: 1px solid var(--accent4); }
+
+  .lesson-title.u1-color { color: var(--accent1); }
+  .lesson-title.u2-color { color: var(--accent2); }
+  .lesson-title.u3-color { color: var(--accent3); }
+  .lesson-title.u4-color { color: var(--accent4); }
+
+  /* Back button */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    padding: 0;
+    margin-bottom: 20px;
+    transition: color 0.2s;
+  }
+
+  .back-btn:hover { color: var(--text); }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent1); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HUD ═══════════ -->
+<div id="hud">
+  <div class="logo">⚖️ CRIMINO<br>QUEST</div>
+  <div class="hud-center">
+    <div class="stat-block">
+      <div class="stat-label">Puntos XP</div>
+      <div class="stat-value" id="hud-xp">0</div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="stat-label" style="margin-bottom:4px;font-size:9px;letter-spacing:2px;color:var(--text-dim)">NIVEL <span id="hud-level">1</span></div>
+      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">Racha</div>
+      <div class="stat-value" id="hud-streak">🔥 0</div>
+    </div>
+  </div>
+  <div class="rank-badge" id="hud-rank">
+    <span>RANGO</span>
+    Recluta
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app">
+
+  <!-- TITLE SCREEN -->
+  <div class="screen active" id="screen-title">
+    <div class="title-badge">Carabineros de Chile · Escuela de Suboficiales</div>
+    <h1 class="main-title">CriminoQuest</h1>
+    <p class="subtitle">⚔ RPG DE CRIMINOLOGÍA 2026 ⚔</p>
+    <div class="intro-card">
+      <p>Bienvenido, cadete. Tu misión: <strong>dominar las 4 unidades de Criminología</strong> a través de batallas de conocimiento. Responde preguntas, une conceptos, completa enunciados y ordena teorías.</p>
+      <br>
+      <p>Cada unidad superada te otorga <strong>XP, estrellas y rango</strong>. ¿Tienes lo que se necesita para convertirte en un Suboficial Criminólogo de élite?</p>
+    </div>
+    <div class="unit-map-title">── Mapa de Unidades ──</div>
+    <div class="units-grid" id="unit-map"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="startUnit(0)">⚡ COMENZAR MISIÓN</button>
+    </div>
+  </div>
+
+  <!-- LESSON SCREEN -->
+  <div class="screen" id="screen-lesson">
+    <button class="back-btn" onclick="goToMap()">← Volver al Mapa</button>
+    <div class="lesson-header">
+      <div class="lesson-unit-badge" id="lesson-badge">U1</div>
+      <h2 class="lesson-title" id="lesson-title">Evolución Histórica</h2>
+    </div>
+    <div class="lesson-progress-bar"><div class="lesson-progress-fill" id="lesson-progress" style="width:0%"></div></div>
+    <div class="steps-indicator" id="steps-indicator"></div>
+    <div id="game-area"></div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen" id="screen-result">
+    <div class="result-card">
+      <span class="result-trophy" id="result-trophy">🏆</span>
+      <div class="result-title" id="result-title">¡Misión Cumplida!</div>
+      <div class="result-score" id="result-score">0</div>
+      <div class="result-xp" id="result-xp">+0 XP</div>
+      <div class="result-stars" id="result-stars">⭐⭐⭐</div>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num" id="res-correct">0</div>
+          <div class="stat-lbl">Correctas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="res-wrong">0</div>
+          <div class="stat-lbl">Errores</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="res-streak">0</div>
+          <div class="stat-lbl">Racha Max</div>
+        </div>
+      </div>
+      <div id="result-msg" style="color:var(--text-dim);font-size:14px;margin-bottom:20px;line-height:1.6;"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goToMap()">🗺 Ver Mapa</button>
+        <button class="btn btn-gold" id="btn-next-unit" onclick="nextUnit()">Siguiente Unidad ⚡</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  GAME DATA – 4 Unidades de Criminología
+// ═══════════════════════════════════════════════════════════════════
+const UNITS = [
+  {
+    id: 0,
+    title: "Evolución Histórica de la Criminología",
+    short: "Evolución Histórica",
+    icon: "🏛️",
+    color: "u1",
+    badge: "UNIDAD 1",
+    steps: [
+      // STEP 0 – Quiz
+      {
+        type: "quiz",
+        question: "¿Cuál es la definición de Criminología según García-Pablos de Molina?",
+        options: [
+          "Ciencia empírica e interdisciplinar que estudia el crimen, el infractor, la víctima y el control social del comportamiento delictivo",
+          "Rama del Derecho Penal que sanciona conductas antisociales",
+          "Disciplina filosófica que analiza la moralidad del delito",
+          "Ciencia deductiva enfocada solo en el perfil del delincuente"
+        ],
+        correct: 0,
+        explanation: "García-Pablos define la Criminología como ciencia empírica e interdisciplinar centrada en el crimen, el infractor, la víctima y el control social."
+      },
+      // STEP 1 – Match
+      {
+        type: "match",
+        instruction: "Une cada objeto de estudio con su definición correcta",
+        pairs: [
+          { left: "El Delito", right: "Fenómeno social con causas, formas y consecuencias" },
+          { left: "El Delincuente", right: "Persona con características biopsicosociales y motivaciones" },
+          { left: "La Víctima", right: "Su papel, vulnerabilidad y consecuencias del delito" },
+          { left: "Control Social", right: "Mecanismos formales e informales de prevención" }
+        ]
+      },
+      // STEP 2 – Fill
+      {
+        type: "fill",
+        instruction: "Completa los blancos con las palabras del banco",
+        sentence: "La Criminología es una ciencia [1], porque se basa en la observación sistemática de la realidad, e [2] porque se nutre de la sociología, psicología, derecho y biología.",
+        blanks: ["empírica", "interdisciplinar"],
+        wordBank: ["empírica", "interdisciplinar", "deductiva", "jurídica", "filosófica", "punitiva"]
+      },
+      // STEP 3 – Quiz
+      {
+        type: "quiz",
+        question: "¿Cuál fue el principal aporte de la Escuela Clásica o Precientífica a la Criminología?",
+        options: [
+          "Estudió los factores biológicos del crimen a través de anatomía",
+          "Racionalizó el sistema penal basándose en el libre albedrío y la proporcionalidad de la pena",
+          "Introdujo el método experimental en la investigación criminal",
+          "Desarrolló la teoría de la asociación diferencial"
+        ],
+        correct: 1,
+        explanation: "La Escuela Clásica (Beccaria, Bentham) basó su pensamiento en el libre albedrío y la proporcionalidad de las penas como disuasión racional."
+      },
+      // STEP 4 – Sort
+      {
+        type: "sort",
+        instruction: "Ordena cronológicamente estas corrientes criminológicas (de la más antigua a la más reciente)",
+        items: [
+          "Escuela Clásica o Precientífica",
+          "Positivismo Biológico de Lombroso",
+          "Teoría de la Anomía de Merton",
+          "Criminología Crítica y Conflicto"
+        ],
+        correctOrder: [0, 1, 2, 3]
+      },
+      // STEP 5 – Quiz final unidad
+      {
+        type: "quiz",
+        question: "Según el positivismo biológico de Lombroso, ¿cómo se explicaba la conducta criminal?",
+        options: [
+          "Por factores económicos y desigualdad social",
+          "Por libre elección racional del individuo",
+          "Por características físicas y biológicas heredadas (el 'criminal nato')",
+          "Por el aprendizaje social en grupos delictivos"
+        ],
+        correct: 2,
+        explanation: "Lombroso postuló que el criminal nace con características físicas atávicas heredadas, lo que se conoce como la teoría del 'criminal nato'."
+      },
+      // STEP 6 – Cuestionario Final U1
+      {
+        type: "final_quiz",
+        title: "🎯 Cuestionario Final – Unidad 1",
+        questions: [
+          {
+            q: "¿Qué significa que la Criminología es una ciencia 'inductiva'?",
+            opts: [
+              "Formula teorías desde principios abstractos hacia casos concretos",
+              "Parte de casos particulares para formular generalizaciones y teorías",
+              "Trabaja exclusivamente con estadísticas cuantitativas",
+              "Se basa en textos legales para explicar el crimen"
+            ],
+            c: 1
+          },
+          {
+            q: "¿Cuáles son las tres funciones de la Criminología según García-Pablos?",
+            opts: [
+              "Penal, procesal y ejecutiva",
+              "Explicativa, preventiva e interventiva positiva en el delincuente",
+              "Descriptiva, normativa y sancionadora",
+              "Histórica, comparada y crítica"
+            ],
+            c: 1
+          },
+          {
+            q: "El Control Social en Criminología se refiere a:",
+            opts: [
+              "El sistema de vigilancia digital del Estado",
+              "Los mecanismos formales e informales que previenen y controlan la delincuencia, incluido el sistema penal",
+              "El control ejercido exclusivamente por las fuerzas policiales",
+              "Las normas internacionales de derechos humanos"
+            ],
+            c: 1
+          }
+        ]
+      }
+    ]
+  },
+
+  // ── UNIDAD 2 ──
+  {
+    id: 1,
+    title: "Explicaciones Criminológicas del Delito",
+    short: "Explicaciones del Delito",
+    icon: "🔍",
+    color: "u2",
+    badge: "UNIDAD 2",
+    steps: [
+      {
+        type: "quiz",
+        question: "La Teoría de las Actividades Rutinarias sostiene que para que ocurra un delito deben coincidir:",
+        options: [
+          "Pobreza, desempleo y marginación social",
+          "Un agresor motivado, un objetivo adecuado y la ausencia de un guardián eficaz",
+          "Un infractor, la oscuridad y la impunidad del sistema",
+          "Desorganización social, anomía y etiquetamiento"
+        ],
+        correct: 1,
+        explanation: "Cohen y Felson (1979) plantearon que el delito ocurre cuando convergen: agresor motivado, objetivo adecuado y ausencia de guardián capaz."
+      },
+      {
+        type: "match",
+        instruction: "Une cada teoría con su autor o concepto clave",
+        pairs: [
+          { left: "Asociación Diferencial", right: "Edwin Sutherland" },
+          { left: "Anomía Social", right: "Robert K. Merton" },
+          { left: "Teoría del Etiquetamiento", right: "Edwin Lemert" },
+          { left: "Elección Racional", right: "Cornish y Clarke" }
+        ]
+      },
+      {
+        type: "fill",
+        instruction: "Completa el principio de la Teoría de la Asociación Diferencial",
+        sentence: "Según Sutherland, el comportamiento criminal se [1] de la misma forma que cualquier otro comportamiento, a través de la [2] con personas que tienen actitudes favorables al delito.",
+        blanks: ["aprende", "asociación"],
+        wordBank: ["aprende", "hereda", "asociación", "imitación", "presión", "imposición"]
+      },
+      {
+        type: "sort",
+        instruction: "Ordena los elementos del Triángulo del Delito (Teoría de las Actividades Rutinarias)",
+        items: [
+          "Agresor Motivado",
+          "Objetivo o Blanco Adecuado",
+          "Ausencia de Guardián Capaz",
+          "Convergencia en Tiempo y Espacio"
+        ],
+        correctOrder: [0, 1, 2, 3]
+      },
+      {
+        type: "quiz",
+        question: "La Teoría de la Anomía de Merton explica el delito como resultado de:",
+        options: [
+          "Características biológicas heredadas del delincuente",
+          "La tensión entre metas culturales (éxito) y los medios legítimos limitados para alcanzarlas",
+          "El aprendizaje del crimen en grupos subculturales",
+          "La reacción social que etiqueta a individuos como delincuentes"
+        ],
+        correct: 1,
+        explanation: "Merton postuló que cuando la sociedad promueve metas de éxito pero niega los medios legítimos, surge la 'strain' o tensión que lleva al delito."
+      },
+      {
+        type: "quiz",
+        question: "¿Cuál de las siguientes es una dimensión de la Prevención Delictual?",
+        options: [
+          "Solo la prevención primaria (educación)",
+          "Primaria (población general), secundaria (grupos de riesgo) y terciaria (reincidencia)",
+          "La prevención únicamente corresponde al sistema judicial",
+          "Prevención reactiva exclusivamente (penas más altas)"
+        ],
+        correct: 1,
+        explanation: "La prevención delictual tiene tres niveles: primaria (toda la población), secundaria (grupos vulnerables) y terciaria (evitar reincidencia)."
+      },
+      {
+        type: "final_quiz",
+        title: "🎯 Cuestionario Final – Unidad 2",
+        questions: [
+          {
+            q: "¿Qué postula la Teoría del Etiquetamiento (Labeling)?",
+            opts: [
+              "Que el crimen es consecuencia de anomalías biológicas",
+              "Que la reacción social que etiqueta a alguien como 'delincuente' refuerza y consolida esa identidad desviada",
+              "Que el delito surge del aprendizaje en grupos criminales",
+              "Que la desorganización urbana favorece el crimen"
+            ],
+            c: 1
+          },
+          {
+            q: "La Teoría del Patrón Delictivo (Brantingham) se enfoca en:",
+            opts: [
+              "La personalidad del delincuente",
+              "La ubicación espacial del delito según las rutinas del ofensor",
+              "La reacción de la víctima durante el delito",
+              "Las estadísticas oficiales de criminalidad"
+            ],
+            c: 1
+          },
+          {
+            q: "Según las Teorías del Control Social de Hirschi, ¿por qué las personas NO cometen delitos?",
+            opts: [
+              "Por miedo a la cárcel",
+              "Por sus vínculos con la sociedad (apego, compromiso, participación y creencia en las normas)",
+              "Por factores biológicos inhibidores de la agresividad",
+              "Por la presencia permanente de la policía"
+            ],
+            c: 1
+          }
+        ]
+      }
+    ]
+  },
+
+  // ── UNIDAD 3 ──
+  {
+    id: 2,
+    title: "Perfilación Delictual",
+    short: "Perfilación Delictual",
+    icon: "🧠",
+    color: "u3",
+    badge: "UNIDAD 3",
+    steps: [
+      {
+        type: "quiz",
+        question: "¿Qué estudian las Trayectorias Criminales en Criminología?",
+        options: [
+          "Los registros policiales de antecedentes de un individuo",
+          "Los cambios en la conducta delictiva a lo largo de la vida, analizando inicio, escalada, mantenimiento y abandono",
+          "Las rutas geográficas que utilizan los delincuentes para cometer sus crímenes",
+          "Los expedientes judiciales de reincidentes"
+        ],
+        correct: 1,
+        explanation: "Las trayectorias criminales analizan cómo evoluciona la conducta delictiva a lo largo del ciclo vital: onset (inicio), escalada, peak y desistimiento."
+      },
+      {
+        type: "match",
+        instruction: "Une cada trastorno o condición con su descripción criminológica",
+        pairs: [
+          { left: "Imputabilidad", right: "Capacidad de comprender y dirigir la conducta conforme a derecho" },
+          { left: "Inimputabilidad", right: "Ausencia de capacidad para comprender lo ilícito de la conducta" },
+          { left: "Trastorno Antisocial", right: "Patrón persistente de violación de normas y derechos ajenos" },
+          { left: "Psicosis", right: "Trastorno mental grave con pérdida del contacto con la realidad" }
+        ]
+      },
+      {
+        type: "fill",
+        instruction: "Completa la definición de Criminodinamia",
+        sentence: "La Criminodinamia estudia el [1] del delito, es decir, cómo se desarrolla, ejecuta y finaliza el acto criminal, analizando la [2] entre la víctima y el agresor.",
+        blanks: ["proceso", "interacción"],
+        wordBank: ["proceso", "origen", "interacción", "consecuencia", "teoría", "perfil"]
+      },
+      {
+        type: "quiz",
+        question: "En el contexto de las adicciones y el delito, ¿cuál de las siguientes afirmaciones es más precisa?",
+        options: [
+          "Toda persona con adicción cometerá delitos necesariamente",
+          "Las adicciones pueden actuar como factor criminógeno al generar necesidad de recursos, alterar la cognición y afectar la inhibición",
+          "La relación entre adicciones y delito es únicamente económica (financiar la droga)",
+          "Las drogas solo afectan la conducta delictiva si son de tipo estimulante"
+        ],
+        correct: 1,
+        explanation: "Las adicciones son factores criminógenos complejos que pueden afectar la conducta por vías económicas, neurológicas y sociales, pero no determinan el delito de forma automática."
+      },
+      {
+        type: "sort",
+        instruction: "Ordena las fases del proceso criminodinámico de manera lógica",
+        items: [
+          "Motivación o impulso inicial",
+          "Planificación y selección del objetivo",
+          "Ejecución del acto delictivo",
+          "Huida o post-facto"
+        ],
+        correctOrder: [0, 1, 2, 3]
+      },
+      {
+        type: "quiz",
+        question: "La Teoría del Conflicto en Criminología sostiene que el delito es:",
+        options: [
+          "Un comportamiento aprendido en grupos subculturales",
+          "Resultado del conflicto entre grupos con diferentes niveles de poder, donde el poderoso define qué es 'delito'",
+          "Una enfermedad mental tratable con terapia",
+          "Una decisión racional basada en costo-beneficio"
+        ],
+        correct: 1,
+        explanation: "Las teorías del conflicto (Marx, Turk, Quinney) plantean que la ley y el delito son construcciones sociales que reflejan las relaciones de poder entre grupos sociales."
+      },
+      {
+        type: "final_quiz",
+        title: "🎯 Cuestionario Final – Unidad 3",
+        questions: [
+          {
+            q: "¿Qué es el 'desistimiento' en el estudio de trayectorias criminales?",
+            opts: [
+              "La primera vez que una persona comete un delito",
+              "El abandono definitivo de la actividad criminal, generalmente asociado a cambios vitales (empleo, familia, madurez)",
+              "La escalada hacia delitos más graves",
+              "La recaída después de un período de libertad"
+            ],
+            c: 1
+          },
+          {
+            q: "¿Cuál es la diferencia principal entre psicópata y sociópata en criminología?",
+            opts: [
+              "Son sinónimos del mismo diagnóstico",
+              "El psicópata presenta frialdad emocional con origen más constitucional; el sociópata muestra conducta antisocial influida principalmente por factores ambientales y sociales",
+              "El sociópata es más violento que el psicópata",
+              "Ambos son siempre inimputables ante la ley"
+            ],
+            c: 1
+          },
+          {
+            q: "En la perfilación criminal, ¿qué es un 'MO' (modus operandi)?",
+            opts: [
+              "La motivación psicológica del delincuente",
+              "El patrón de comportamiento habitual que utiliza el delincuente para cometer sus crímenes",
+              "El estado mental del infractor en el momento del delito",
+              "El lugar geográfico preferido por el delincuente"
+            ],
+            c: 1
+          }
+        ]
+      }
+    ]
+  },
+
+  // ── UNIDAD 4 ──
+  {
+    id: 3,
+    title: "Investigación Criminal como Control Social",
+    short: "Investigación Criminal",
+    icon: "🔬",
+    color: "u4",
+    badge: "UNIDAD 4",
+    steps: [
+      {
+        type: "quiz",
+        question: "¿Cuál es la relación principal entre la Investigación Criminal y la Criminología?",
+        options: [
+          "La investigación criminal reemplaza a la criminología en la práctica policial",
+          "La Criminología aporta marcos teóricos (perfiles, motivaciones, patrones) que orientan y enriquecen la investigación criminal",
+          "Son disciplinas completamente independientes sin vínculos entre sí",
+          "La investigación criminal solo usa análisis forense, no criminología"
+        ],
+        correct: 1,
+        explanation: "La Criminología y la Investigación Criminal se complementan: la primera provee teoría y la segunda aplica métodos para esclarecer delitos."
+      },
+      {
+        type: "match",
+        instruction: "Une cada tipo de delito o área investigativa con su descripción",
+        pairs: [
+          { left: "Crimen Organizado", right: "Estructura jerarquizada que opera para obtener ganancias ilegales a gran escala" },
+          { left: "Investigación Patrimonial", right: "Seguimiento de activos y flujo de dinero ilícito" },
+          { left: "Tráfico de Drogas", right: "Producción, transporte y comercialización de sustancias controladas" },
+          { left: "Evidencia Digital", right: "Datos almacenados en dispositivos electrónicos usados como prueba" }
+        ]
+      },
+      {
+        type: "quiz",
+        question: "¿Qué es la 'Deep Web' en el contexto de la investigación criminal?",
+        options: [
+          "Lo mismo que la Dark Web, son sinónimos exactos",
+          "La parte de internet que no es indexada por buscadores convencionales; incluye bases de datos privadas y correo electrónico",
+          "Una red exclusivamente usada por criminales para operar",
+          "El conjunto de páginas bloqueadas por el gobierno"
+        ],
+        correct: 1,
+        explanation: "La Deep Web es la parte de internet no indexada (correos, intranets, bancos). La Dark Web es un subconjunto que requiere software especial y alberga actividades ilícitas."
+      },
+      {
+        type: "fill",
+        instruction: "Completa el concepto de Inteligencia de Fuentes Abiertas (OSINT)",
+        sentence: "La información proveniente de [1] abiertas (OSINT) incluye datos disponibles públicamente como redes sociales, medios de comunicación, registros oficiales, que sirven para [2] criminal.",
+        blanks: ["fuentes", "inteligencia"],
+        wordBank: ["fuentes", "registros", "inteligencia", "vigilancia", "prisión", "tecnología"]
+      },
+      {
+        type: "sort",
+        instruction: "Ordena las etapas de una investigación criminal típica",
+        items: [
+          "Conocimiento del hecho delictivo",
+          "Aseguramiento y procesamiento de la escena",
+          "Recolección y análisis de evidencia",
+          "Identificación y formalización del imputado"
+        ],
+        correctOrder: [0, 1, 2, 3]
+      },
+      {
+        type: "quiz",
+        question: "El tráfico de armas transnacional se combate principalmente mediante:",
+        options: [
+          "Solo con operaciones policiales nacionales",
+          "Cooperación internacional, intercambio de inteligencia y trazabilidad de armas (marcado y seguimiento)",
+          "Únicamente sanciones económicas a los países productores",
+          "Programas de desarme voluntario de la población civil"
+        ],
+        correct: 1,
+        explanation: "El combate al tráfico transnacional de armas requiere coordinación internacional, bases de datos compartidas y técnicas de trazabilidad balística."
+      },
+      {
+        type: "final_quiz",
+        title: "🎯 Cuestionario Final – Unidad 4",
+        questions: [
+          {
+            q: "¿Qué se entiende por 'Crimen Organizado Transnacional'?",
+            opts: [
+              "Pandillas locales que operan en más de un barrio",
+              "Organizaciones criminales que operan en múltiples países, con estructura jerárquica, para obtener ganancias ilícitas a escala global",
+              "Cualquier delito cometido por dos o más personas en coordinación",
+              "El crimen organizado que utiliza tecnología digital"
+            ],
+            c: 1
+          },
+          {
+            q: "En investigación criminal, ¿qué es la 'cadena de custodia'?",
+            opts: [
+              "El procedimiento penitenciario para trasladar detenidos",
+              "El conjunto de procedimientos que garantizan la integridad, autenticidad y trazabilidad de la evidencia desde su recolección hasta el juicio",
+              "La lista de sospechosos identificados en una investigación",
+              "El registro de los pasos de un detective en la escena del crimen"
+            ],
+            c: 1
+          },
+          {
+            q: "¿Por qué es importante la labor territorial del Carabinero en la investigación criminal?",
+            opts: [
+              "Solo para cumplir con el protocolo de patrullaje",
+              "Porque el conocimiento del entorno, la comunidad y los patrones locales es fuente de inteligencia valiosa para detectar y prevenir delitos",
+              "Únicamente para cobrar multas de tránsito",
+              "No tiene relación con la investigación criminal"
+            ],
+            c: 1
+          }
+        ]
+      }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════════════
+const STATE = {
+  xp: 0,
+  level: 1,
+  streak: 0,
+  maxStreak: 0,
+  currentUnit: 0,
+  currentStep: 0,
+  sessionCorrect: 0,
+  sessionWrong: 0,
+  sessionScore: 0,
+  unitsCompleted: [],
+  unitStars: {},
+  // Match state
+  matchSelected: null,
+  matchDone: [],
+  // Final quiz state
+  fqIndex: 0,
+  fqCorrect: 0,
+  // Sort state
+  dragSrc: null
+};
+
+const XP_PER_LEVEL = 200;
+const RANKS = [
+  { min: 0, name: "Recluta" },
+  { min: 1, name: "Aspirante" },
+  { min: 3, name: "Cadete" },
+  { min: 5, name: "Suboficial" },
+  { min: 8, name: "Detective" },
+  { min: 12, name: "Investigador" },
+  { min: 16, name: "Criminólogo" },
+  { min: 20, name: "Maestro Forense" }
+];
+
+function getRank() {
+  for (let i = RANKS.length - 1; i >= 0; i--) {
+    if (STATE.level >= RANKS[i].min) return RANKS[i].name;
+  }
+  return "Recluta";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HUD UPDATE
+// ═══════════════════════════════════════════════════════════════════
+function updateHUD() {
+  document.getElementById('hud-xp').textContent = STATE.xp;
+  document.getElementById('hud-level').textContent = STATE.level;
+  document.getElementById('hud-streak').textContent = `🔥 ${STATE.streak}`;
+  const pct = ((STATE.xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100;
+  document.getElementById('xp-bar').style.width = pct + '%';
+  const rank = getRank();
+  document.getElementById('hud-rank').innerHTML = `<span>RANGO</span>${rank}`;
+}
+
+function addXP(amount) {
+  const oldLevel = STATE.level;
+  STATE.xp += amount;
+  const newLevel = Math.floor(STATE.xp / XP_PER_LEVEL) + 1;
+  STATE.level = newLevel;
+  if (newLevel > oldLevel) showLevelUp(newLevel);
+  updateHUD();
+}
+
+function showLevelUp(level) {
+  const splash = document.createElement('div');
+  splash.className = 'level-up-splash';
+  splash.innerHTML = `<div class="level-up-content">
+    <span class="level-up-icon">⬆️</span>
+    <div class="level-up-text">¡NIVEL ${level}!</div>
+    <div style="color:var(--accent1);font-family:'Orbitron',sans-serif;font-size:18px;margin-top:8px;">Rango: ${getRank()}</div>
+  </div>`;
+  document.body.appendChild(splash);
+  setTimeout(() => splash.remove(), 2600);
+}
+
+function floatPoints(amount, isPositive) {
+  const el = document.createElement('div');
+  el.className = `float-points ${isPositive ? 'plus' : 'minus'}`;
+  el.textContent = isPositive ? `+${amount}XP` : `-${amount}XP`;
+  el.style.left = (window.innerWidth / 2 - 40) + 'px';
+  el.style.top = (window.innerHeight / 2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1600);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function goToMap() {
+  renderUnitMap();
+  showScreen('title');
+  window.scrollTo(0, 0);
+}
+
+function nextUnit() {
+  const next = STATE.currentUnit + 1;
+  if (next < UNITS.length) startUnit(next);
+  else goToMap();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  UNIT MAP
+// ═══════════════════════════════════════════════════════════════════
+function renderUnitMap() {
+  const container = document.getElementById('unit-map');
+  container.innerHTML = '';
+  UNITS.forEach((unit, i) => {
+    const done = STATE.unitsCompleted.includes(i);
+    const locked = i > 0 && !STATE.unitsCompleted.includes(i - 1);
+    const stars = STATE.unitStars[i] || 0;
+    const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    const statusText = done ? 'COMPLETADA' : locked ? 'BLOQUEADA' : 'DISPONIBLE';
+    const statusClass = done ? 'status-done' : locked ? 'status-locked' : 'status-available';
+    const card = document.createElement('div');
+    card.className = `unit-card ${unit.color}${locked ? ' locked' : ''}`;
+    card.innerHTML = `
+      <span class="unit-icon">${unit.icon}</span>
+      <div class="unit-num">${unit.badge}</div>
+      <div class="unit-name">${unit.short}</div>
+      <div class="unit-stars">${starStr}</div>
+      <span class="unit-status ${statusClass}">${statusText}</span>
+    `;
+    if (!locked) card.onclick = () => startUnit(i);
+    container.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  START UNIT
+// ═══════════════════════════════════════════════════════════════════
+function startUnit(unitIdx) {
+  STATE.currentUnit = unitIdx;
+  STATE.currentStep = 0;
+  STATE.sessionCorrect = 0;
+  STATE.sessionWrong = 0;
+  STATE.sessionScore = 0;
+  STATE.streak = 0;
+
+  const unit = UNITS[unitIdx];
+  const badge = document.getElementById('lesson-badge');
+  badge.className = `lesson-unit-badge ${unit.color}`;
+  badge.textContent = unit.badge;
+
+  const title = document.getElementById('lesson-title');
+  title.className = `lesson-title ${unit.color}-color`;
+  title.textContent = unit.short;
+
+  renderStepIndicator();
+  renderStep();
+  showScreen('lesson');
+  window.scrollTo(0, 0);
+}
+
+function renderStepIndicator() {
+  const unit = UNITS[STATE.currentUnit];
+  const total = unit.steps.length;
+  const ind = document.getElementById('steps-indicator');
+  ind.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = `step-dot${i === STATE.currentStep ? ' active' : i < STATE.currentStep ? ' done' : ''}`;
+    ind.appendChild(dot);
+  }
+  const pct = (STATE.currentStep / total) * 100;
+  document.getElementById('lesson-progress').style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDER STEP
+// ═══════════════════════════════════════════════════════════════════
+function renderStep() {
+  const unit = UNITS[STATE.currentUnit];
+  const step = unit.steps[STATE.currentStep];
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+  renderStepIndicator();
+
+  if (step.type === 'quiz') renderQuiz(step, area);
+  else if (step.type === 'match') renderMatch(step, area);
+  else if (step.type === 'fill') renderFill(step, area);
+  else if (step.type === 'sort') renderSort(step, area);
+  else if (step.type === 'final_quiz') renderFinalQuiz(step, area);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  QUIZ
+// ═══════════════════════════════════════════════════════════════════
+function renderQuiz(step, area) {
+  const letters = ['A', 'B', 'C', 'D'];
+  let answered = false;
+  let hintShown = false;
+
+  const frame = document.createElement('div');
+  frame.className = 'game-frame frame-quiz';
+  frame.innerHTML = `
+    <div class="game-type-tag tag-quiz">🎯 Pregunta de Selección Múltiple</div>
+    <div class="question-text">${step.question}</div>
+    <div class="quiz-options" id="quiz-opts"></div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="hint-btn" id="hint-btn" onclick="toggleHint()">💡 Pista</button>
+    </div>
+    <div id="hint-box" style="display:none" class="hint-box">💡 ${step.explanation}</div>
+    <div id="quiz-feedback"></div>
+  `;
+  area.appendChild(frame);
+
+  const optsEl = frame.querySelector('#quiz-opts');
+  step.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt}`;
+    btn.onclick = () => {
+      if (answered) return;
+      answered = true;
+      optsEl.querySelectorAll('.quiz-option').forEach(b => b.classList.add('disabled'));
+      const isCorrect = i === step.correct;
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+      if (!isCorrect) optsEl.querySelectorAll('.quiz-option')[step.correct].classList.add('correct');
+
+      const fb = frame.querySelector('#quiz-feedback');
+      if (isCorrect) {
+        const xpGained = 15 + (STATE.streak * 3);
+        STATE.streak++;
+        STATE.maxStreak = Math.max(STATE.maxStreak, STATE.streak);
+        STATE.sessionCorrect++;
+        STATE.sessionScore += xpGained;
+        addXP(xpGained);
+        floatPoints(xpGained, true);
+        fb.innerHTML = `<div class="feedback-banner correct-fb"><div class="fb-icon">✅</div><div class="fb-text"><div class="fb-title">¡Correcto! +${xpGained} XP ${STATE.streak > 1 ? '🔥×' + STATE.streak : ''}</div><div class="fb-detail">${step.explanation}</div></div></div>`;
+      } else {
+        STATE.streak = 0;
+        STATE.sessionWrong++;
+        fb.innerHTML = `<div class="feedback-banner wrong-fb"><div class="fb-icon">❌</div><div class="fb-text"><div class="fb-title">Incorrecto</div><div class="fb-detail">${step.explanation}</div></div></div>`;
+      }
+
+      setTimeout(() => {
+        advanceStep();
+      }, 2200);
+    };
+    optsEl.appendChild(btn);
+  });
+
+  window.toggleHint = () => {
+    hintShown = !hintShown;
+    frame.querySelector('#hint-box').style.display = hintShown ? 'block' : 'none';
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MATCH
+// ═══════════════════════════════════════════════════════════════════
+function renderMatch(step, area) {
+  const pairs = [...step.pairs];
+  const shuffledRight = pairs.map((_, i) => i).sort(() => Math.random() - 0.5);
+
+  let selLeft = null;
+  let selRight = null;
+  let matched = [];
+  let errors = 0;
+
+  const frame = document.createElement('div');
+  frame.className = 'game-frame frame-match';
+  frame.innerHTML = `
+    <div class="game-type-tag tag-match">🔗 Unión de Conceptos</div>
+    <div class="question-text" style="font-size:15px">${step.instruction}</div>
+    <div class="match-container">
+      <div>
+        <div class="match-col-title">Concepto</div>
+        <div id="left-col"></div>
+      </div>
+      <div>
+        <div class="match-col-title">Definición</div>
+        <div id="right-col"></div>
+      </div>
+    </div>
+    <div id="match-feedback"></div>
+  `;
+  area.appendChild(frame);
+
+  const leftCol = frame.querySelector('#left-col');
+  const rightCol = frame.querySelector('#right-col');
+
+  pairs.forEach((pair, i) => {
+    const el = document.createElement('div');
+    el.className = 'match-item';
+    el.textContent = pair.left;
+    el.dataset.idx = i;
+    el.onclick = () => handleMatchLeft(el, i);
+    leftCol.appendChild(el);
+  });
+
+  shuffledRight.forEach(ri => {
+    const el = document.createElement('div');
+    el.className = 'match-item';
+    el.textContent = pairs[ri].right;
+    el.dataset.idx = ri;
+    el.onclick = () => handleMatchRight(el, ri);
+    rightCol.appendChild(el);
+  });
+
+  function handleMatchLeft(el, idx) {
+    if (matched.includes(idx)) return;
+    leftCol.querySelectorAll('.match-item').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    selLeft = { el, idx };
+    tryMatch();
+  }
+
+  function handleMatchRight(el, idx) {
+    if (matched.includes(idx)) return;
+    rightCol.querySelectorAll('.match-item').forEach(e => {
+      if (!matched.includes(parseInt(e.dataset.idx))) e.classList.remove('selected');
+    });
+    el.classList.add('selected');
+    selRight = { el, idx };
+    tryMatch();
+  }
+
+  function tryMatch() {
+    if (!selLeft || !selRight) return;
+    const lIdx = selLeft.idx, rIdx = selRight.idx;
+    if (lIdx === rIdx) {
+      // Correct
+      selLeft.el.classList.remove('selected');
+      selLeft.el.classList.add('matched');
+      selRight.el.classList.remove('selected');
+      selRight.el.classList.add('matched');
+      matched.push(lIdx);
+      const xpGained = 10;
+      STATE.streak++;
+      STATE.maxStreak = Math.max(STATE.maxStreak, STATE.streak);
+      addXP(xpGained);
+      floatPoints(xpGained, true);
+
+      if (matched.length === pairs.length) {
+        // All matched
+        STATE.sessionCorrect += pairs.length;
+        STATE.sessionScore += 30;
+        frame.querySelector('#match-feedback').innerHTML = `<div class="feedback-banner correct-fb"><div class="fb-icon">🎉</div><div class="fb-text"><div class="fb-title">¡Todos los pares unidos correctamente!</div></div></div>`;
+        setTimeout(advanceStep, 2000);
+      }
+    } else {
+      // Wrong
+      selLeft.el.classList.remove('selected');
+      selRight.el.classList.remove('selected');
+      selLeft.el.classList.add('selected-wrong');
+      selRight.el.classList.add('selected-wrong');
+      errors++;
+      STATE.streak = 0;
+      STATE.sessionWrong++;
+      addXP(-5);
+      floatPoints(5, false);
+      setTimeout(() => {
+        selLeft.el.classList.remove('selected-wrong');
+        selRight.el.classList.remove('selected-wrong');
+      }, 600);
+    }
+    selLeft = null;
+    selRight = null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FILL IN THE BLANK
+// ═══════════════════════════════════════════════════════════════════
+function renderFill(step, area) {
+  let blankIdx = 0;
+  const usedWords = new Set();
+  const blankInputs = [];
+
+  const sentence = step.sentence.replace(/\[(\d+)\]/g, (_, n) => {
+    const id = `blank-${n}`;
+    return `<input class="blank-input" id="${id}" type="text" placeholder="____" autocomplete="off">`;
+  });
+
+  const frame = document.createElement('div');
+  frame.className = 'game-frame frame-fill';
+  frame.innerHTML = `
+    <div class="game-type-tag tag-fill">✏️ Completa el Enunciado</div>
+    <div class="question-text" style="font-size:14px;margin-bottom:8px">${step.instruction}</div>
+    <div class="fill-blank-wrap">${sentence}</div>
+    <div class="match-col-title" style="margin-bottom:8px">BANCO DE PALABRAS</div>
+    <div class="word-bank" id="word-bank"></div>
+    <div id="fill-feedback"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="checkFill()">✅ Verificar</button></div>
+  `;
+  area.appendChild(frame);
+
+  const bank = frame.querySelector('#word-bank');
+  step.wordBank.sort(() => Math.random() - 0.5).forEach(word => {
+    const chip = document.createElement('div');
+    chip.className = 'word-chip';
+    chip.textContent = word;
+    chip.onclick = () => {
+      const active = frame.querySelector('.blank-input:not([disabled]):focus') || frame.querySelectorAll('.blank-input:not([disabled]):not(.correct-input)')[0];
+      if (active && !chip.classList.contains('used')) {
+        active.value = word;
+        chip.classList.add('used');
+      }
+    };
+    bank.appendChild(chip);
+  });
+
+  window.checkFill = () => {
+    let allCorrect = true;
+    const fb = frame.querySelector('#fill-feedback');
+    step.blanks.forEach((ans, i) => {
+      const input = frame.querySelector(`#blank-${i + 1}`);
+      if (!input) return;
+      const val = input.value.trim().toLowerCase();
+      const correct = ans.toLowerCase();
+      input.classList.remove('correct-input', 'wrong-input');
+      if (val === correct) {
+        input.classList.add('correct-input');
+        input.disabled = true;
+      } else {
+        input.classList.add('wrong-input');
+        allCorrect = false;
+      }
+    });
+
+    if (allCorrect) {
+      const xpGained = 25;
+      STATE.streak++;
+      STATE.maxStreak = Math.max(STATE.maxStreak, STATE.streak);
+      STATE.sessionCorrect++;
+      STATE.sessionScore += xpGained;
+      addXP(xpGained);
+      floatPoints(xpGained, true);
+      fb.innerHTML = `<div class="feedback-banner correct-fb"><div class="fb-icon">✅</div><div class="fb-text"><div class="fb-title">¡Correcto! +${xpGained} XP</div></div></div>`;
+      setTimeout(advanceStep, 2000);
+    } else {
+      STATE.streak = 0;
+      STATE.sessionWrong++;
+      addXP(-5);
+      floatPoints(5, false);
+      fb.innerHTML = `<div class="feedback-banner wrong-fb"><div class="fb-icon">❌</div><div class="fb-text"><div class="fb-title">Revisa tus respuestas</div><div class="fb-detail">Las respuestas en rojo no son correctas. Inténtalo de nuevo.</div></div></div>`;
+      setTimeout(() => {
+        frame.querySelectorAll('.blank-input.wrong-input').forEach(i => { i.classList.remove('wrong-input'); i.value = ''; });
+        frame.querySelectorAll('.word-chip.used').forEach(c => c.classList.remove('used'));
+        fb.innerHTML = '';
+      }, 1800);
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SORT / DRAG
+// ═══════════════════════════════════════════════════════════════════
+function renderSort(step, area) {
+  let order = step.items.map((_, i) => i).sort(() => Math.random() - 0.5);
+  let dragSrcIdx = null;
+
+  const frame = document.createElement('div');
+  frame.className = 'game-frame frame-sort';
+  frame.innerHTML = `
+    <div class="game-type-tag tag-sort">🔀 Ordena los Elementos</div>
+    <div class="question-text" style="font-size:14px;margin-bottom:8px">${step.instruction}</div>
+    <div class="sort-container" id="sort-list"></div>
+    <div id="sort-feedback"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="checkSort()">✅ Verificar Orden</button></div>
+  `;
+  area.appendChild(frame);
+
+  function renderList() {
+    const list = frame.querySelector('#sort-list');
+    list.innerHTML = '';
+    order.forEach((itemIdx, pos) => {
+      const el = document.createElement('div');
+      el.className = 'sort-item';
+      el.draggable = true;
+      el.dataset.pos = pos;
+      el.innerHTML = `<span class="sort-handle">⠿</span><span class="sort-num">${pos + 1}</span><span>${step.items[itemIdx]}</span>`;
+
+      el.addEventListener('dragstart', e => {
+        dragSrcIdx = pos;
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+      el.addEventListener('dragleave', () => el.classList.remove('over'));
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        el.classList.remove('over');
+        const targetPos = parseInt(el.dataset.pos);
+        if (dragSrcIdx !== null && dragSrcIdx !== targetPos) {
+          const tmp = order[dragSrcIdx];
+          order[dragSrcIdx] = order[targetPos];
+          order[targetPos] = tmp;
+          dragSrcIdx = null;
+          renderList();
+        }
+      });
+
+      // Touch swap
+      el.addEventListener('click', () => {
+        if (dragSrcIdx === null) {
+          dragSrcIdx = pos;
+          el.style.borderColor = 'var(--accent1)';
+        } else {
+          const tmp = order[dragSrcIdx];
+          order[dragSrcIdx] = order[pos];
+          order[pos] = tmp;
+          dragSrcIdx = null;
+          renderList();
+        }
+      });
+
+      list.appendChild(el);
+    });
+  }
+
+  renderList();
+
+  window.checkSort = () => {
+    const correct = JSON.stringify(order) === JSON.stringify(step.correctOrder);
+    const fb = frame.querySelector('#sort-feedback');
+    if (correct) {
+      const xpGained = 20;
+      STATE.streak++;
+      STATE.maxStreak = Math.max(STATE.maxStreak, STATE.streak);
+      STATE.sessionCorrect++;
+      STATE.sessionScore += xpGained;
+      addXP(xpGained);
+      floatPoints(xpGained, true);
+      fb.innerHTML = `<div class="feedback-banner correct-fb"><div class="fb-icon">✅</div><div class="fb-text"><div class="fb-title">¡Orden correcto! +${xpGained} XP</div></div></div>`;
+      setTimeout(advanceStep, 2000);
+    } else {
+      STATE.streak = 0;
+      STATE.sessionWrong++;
+      addXP(-5);
+      floatPoints(5, false);
+      const correctNames = step.correctOrder.map(i => step.items[i]);
+      fb.innerHTML = `<div class="feedback-banner wrong-fb"><div class="fb-icon">❌</div><div class="fb-text"><div class="fb-title">Orden incorrecto</div><div class="fb-detail">El orden correcto es: ${correctNames.join(' → ')}</div></div></div>`;
+      setTimeout(() => {
+        fb.innerHTML = `<div class="feedback-banner info-fb"><div class="fb-icon">💡</div><div class="fb-text"><div class="fb-detail">Reordena los elementos y vuelve a intentarlo. Puedes hacer clic en dos elementos para intercambiarlos.</div></div></div>`;
+      }, 3000);
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FINAL QUIZ (multi-question)
+// ═══════════════════════════════════════════════════════════════════
+function renderFinalQuiz(step, area) {
+  let fqIdx = 0;
+  let fqCorrect = 0;
+  const letters = ['A', 'B', 'C', 'D'];
+
+  const frame = document.createElement('div');
+  frame.className = 'game-frame frame-quiz';
+  frame.style.borderColor = 'var(--accent2)';
+  frame.innerHTML = `
+    <div class="game-type-tag tag-quiz" style="background:rgba(255,215,0,0.15);color:var(--accent2);border-color:var(--accent2)">🏆 ${step.title}</div>
+    <div id="fq-progress-text" style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Pregunta 1 de ${step.questions.length}</div>
+    <div id="fq-content"></div>
+  `;
+  area.appendChild(frame);
+
+  function showFQ() {
+    if (fqIdx >= step.questions.length) {
+      // Done
+      const totalXp = fqCorrect * 20;
+      STATE.sessionCorrect += fqCorrect;
+      STATE.sessionWrong += (step.questions.length - fqCorrect);
+      STATE.sessionScore += totalXp;
+      addXP(totalXp);
+      frame.querySelector('#fq-content').innerHTML = `
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:60px;margin-bottom:12px">${fqCorrect === step.questions.length ? '🏆' : fqCorrect >= 2 ? '🥈' : '📖'}</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:32px;color:var(--accent2);margin-bottom:8px">${fqCorrect}/${step.questions.length}</div>
+          <div style="color:var(--text-dim);margin-bottom:16px">Respuestas correctas en el cuestionario final</div>
+          <div style="color:var(--accent1);font-size:16px">+${totalXp} XP obtenidos</div>
+        </div>
+      `;
+      setTimeout(() => {
+        endUnit();
+      }, 2500);
+      return;
+    }
+
+    const q = step.questions[fqIdx];
+    frame.querySelector('#fq-progress-text').textContent = `Pregunta ${fqIdx + 1} de ${step.questions.length}`;
+    const content = frame.querySelector('#fq-content');
+    content.innerHTML = '';
+
+    const qDiv = document.createElement('div');
+    qDiv.className = 'question-text';
+    qDiv.textContent = q.q;
+    content.appendChild(qDiv);
+
+    const optsDiv = document.createElement('div');
+    optsDiv.className = 'quiz-options';
+    let answered = false;
+
+    q.opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt}`;
+      btn.onclick = () => {
+        if (answered) return;
+        answered = true;
+        optsDiv.querySelectorAll('.quiz-option').forEach(b => b.classList.add('disabled'));
+        const isCorrect = i === q.c;
+        btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        if (!isCorrect) optsDiv.querySelectorAll('.quiz-option')[q.c].classList.add('correct');
+        if (isCorrect) { fqCorrect++; STATE.streak++; STATE.maxStreak = Math.max(STATE.maxStreak, STATE.streak); addXP(5); floatPoints(5, true); }
+        else { STATE.streak = 0; }
+        setTimeout(() => { fqIdx++; showFQ(); }, 1800);
+      };
+      optsDiv.appendChild(btn);
+    });
+
+    content.appendChild(optsDiv);
+  }
+
+  showFQ();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ADVANCE / END
+// ═══════════════════════════════════════════════════════════════════
+function advanceStep() {
+  STATE.currentStep++;
+  const unit = UNITS[STATE.currentUnit];
+  if (STATE.currentStep >= unit.steps.length) {
+    endUnit();
+  } else {
+    renderStep();
+    window.scrollTo(0, 0);
+  }
+}
+
+function endUnit() {
+  const uIdx = STATE.currentUnit;
+  if (!STATE.unitsCompleted.includes(uIdx)) STATE.unitsCompleted.push(uIdx);
+
+  const total = STATE.sessionCorrect + STATE.sessionWrong;
+  const pct = total > 0 ? STATE.sessionCorrect / total : 0;
+  const stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : 1;
+  STATE.unitStars[uIdx] = Math.max(STATE.unitStars[uIdx] || 0, stars);
+
+  const totalXP = STATE.sessionScore;
+  const trophy = stars === 3 ? '🏆' : stars === 2 ? '🥈' : '🥉';
+  const msgs = [
+    "Sigue repasando el material para afianzar los conceptos.",
+    "¡Buen trabajo! Tienes bases sólidas en esta unidad.",
+    "¡Excelente! Dominas completamente esta unidad."
+  ];
+
+  document.getElementById('result-trophy').textContent = trophy;
+  document.getElementById('result-title').textContent = stars === 3 ? '¡Misión Dominada!' : '¡Misión Cumplida!';
+  document.getElementById('result-score').textContent = totalXP + ' XP';
+  document.getElementById('result-xp').textContent = `+${totalXP} XP totales esta unidad`;
+  document.getElementById('result-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('res-correct').textContent = STATE.sessionCorrect;
+  document.getElementById('res-wrong').textContent = STATE.sessionWrong;
+  document.getElementById('res-streak').textContent = STATE.maxStreak;
+  document.getElementById('result-msg').textContent = msgs[stars - 1];
+
+  const btnNext = document.getElementById('btn-next-unit');
+  const nextIdx = uIdx + 1;
+  if (nextIdx < UNITS.length) {
+    btnNext.style.display = '';
+    btnNext.textContent = `Siguiente: ${UNITS[nextIdx].short} ⚡`;
+  } else {
+    btnNext.textContent = '🏁 ¡Curso Completado!';
+  }
+
+  showScreen('result');
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════
+renderUnitMap();
+updateHUD();
+</script>
+</body>
+</html>
